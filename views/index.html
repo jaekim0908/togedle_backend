@@ -1,0 +1,53 @@
+<!DOCTYPE html>
+<html ng-app="talkingbinConsole">
+<head>
+    <meta http-equiv="Content-type" content="text/html; charset=utf-8">
+    
+    <title>TalkingBin Console</title>
+   
+    <link href="stylesheets/talkingbinConsole.css" rel="stylesheet">
+    
+    <!-- Latest compiled and minified CSS -->
+    <link rel="stylesheet" href="//netdna.bootstrapcdn.com/bootstrap/3.1.1/css/bootstrap.min.css">
+    
+    <!--placeholder-->
+    <!-- <script src="js/vendor/parse.min.js"></script> -->
+    <script src="javascripts/vendor/jquery-2.1.0.min.js"></script>
+    <script src="javascripts/vendor/angular.js"></script>
+    <script src="javascripts/vendor/angular-route.js"></script>
+    <script src="javascripts/console.js"></script>
+</head>
+<body ng-controller="TalkingbinController">
+    <div class="jumbotron">
+        <h1>Welcome to TalkingBin Console</h1>
+        <div class="input-group">
+            <input type="text" class="form-control" ng-model="username" placeholder="Name">
+        </div>
+        <div class="btn btn-default" ng-click="changeUsername()">Apply</div>
+        <div class="btn btn-default" ng-click="sync()">Sync</div>
+    </div>
+    
+    <div class="col-md-6">
+        <h2>Primary</h2>
+        <p>Service Provider : {{ configuration.primary.serviceProvider }}</p>
+        <p>Bin Name : {{ configuration.primary.name }}</p>
+        
+        <h3>Bin Policy</h3>
+        <p>{{ configuration.primary.policy }}</p>
+        
+        <h3>Files</h3>
+        <p ng-repeat="(key, value) in configuration.primary.files">{{ key }}</p>
+    </div>
+    <div class="col-md-6">
+        <h2>Secondary</h2>
+        <p>Service Provider : {{ configuration.secondary.serviceProvider }}</p>
+        <p>Bin Name : {{ configuration.secondary.name }}</p>
+        
+        <h3>Bin Policy</h3>
+        <p>{{ configuration.secondary.policy }}</p>
+        
+        <h3>Files</h3>
+        <p ng-repeat="(key, value) in configuration.secondary.files">{{ key }}</p>
+    </div>
+</body>
+</html>
