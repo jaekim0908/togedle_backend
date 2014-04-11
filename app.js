@@ -21,7 +21,6 @@ var app = express();
 app.set('port', process.env.PORT || 3000);
 app.set('views', path.join('views'));
 app.engine('html', require('ejs').renderFile);
-app.use(express.favicon());
 app.use(express.logger('dev'));
 app.use(express.json());
 app.use(express.urlencoded());
@@ -86,13 +85,36 @@ app.get('/getContainerACL/:containerName', function(req, res) {
 });
 
 app.get('/crop', function(req, res) {
-    s3Service.getImage("talkingbinsample", "disneyland.jpg")
+    var tileWidth = 150;
+    var tileHeight = 100;
+    bsService.get("togedle", "disneyland.jpg", "/tmp/output.jpg")
+    .then(function(image) {
+        return new Promise(function(resolve, reject) {
+            gm(image).command('convert').in("-crop", tileWidth + "x" + tileHeight).in('+adjoin').in(image).write('outputs/disney%04d.jpg', function(err){
+                if (err) {
+                    reject(err);
+                }
+                resolve("outputs/");
+            })
+        });
+    })
+    .then(function(folder){
+        // upload to azure
+        bsService.putFolder("togedle", folder)
+        .then(function(result){
+            res.writeHead(200, { 'Content-Type': 'application/json' });
+            res.end(JSON.stringify({"done" : "done"}));
+        });
+    });
+});
+
+app.get('/store', function(req, res) {
+    bsService.put("togedle", "disneyland.jpg", "disneyland.jpg")
     .then(function(image) {
         res.writeHead(200, { 'Content-Type': 'application/json' });
         res.end(JSON.stringify({"done" : "done"}));
     });
 });
-
 
 
 http.createServer(app).listen(app.get('port'), function(){

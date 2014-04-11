@@ -1,6 +1,68 @@
 var azure = require('azure');
 var Promise = require("bluebird");
+var fs = require("fs");
+var util = require("./util");
 var blobService = azure.createBlobService();
+
+exports.put = function(container, filename, fileLocation) {
+    // fileLocation is the folder
+    var fileLocation = (fileLocation == null) ? "" : fileLocation;
+    return new Promise(function(resolve, reject) {
+        blobService.createBlockBlobFromFile(
+                container,
+                filename,
+                fileLocation + filename,
+                function(error, blobResult, response){
+                    if(!error){
+                        console.log("- stored " + filename);
+                        resolve(filename);
+                    } else {
+                        // TODO : Do not stop everything because we failed to copy one file.
+                        console.log("error");
+                        reject(error);
+                    }
+                });
+    });
+    
+}
+
+exports.putFolder = function(container, folderLocation) {
+    var promises = [];
+    var maximumThread = 5;
+    var files = fs.readdirSync(folderLocation);
+    for (var i = 0; i < maximumThread; i++){
+        promises.push(util.promiseWhile(
+                //termination condition
+                function() { return files.length <= 0;},
+                //run this until
+                function() { return exports.put(container, files.pop(), folderLocation)}
+        ));
+    }
+    return Promise.all(promises);
+    
+}
+
+
+exports.get = function(container, filename, output) {
+    return new Promise(function(resolve, reject) {
+        var fs=require('fs');
+        blobService.getBlobToFile(
+                container,
+                filename,
+                output,
+                function(error, blobResult, response){
+                    if(!error){
+                        console.log("- stored " + filename);
+                        resolve(output);
+                    } else {
+                        // TODO : Do not stop everything because we failed to copy one file.
+                        reject(error);
+                    }
+                });
+    });
+    
+}
+
 
 //Get filenames from blob storage
 exports.getFilenamesFromBlob = function(containerName){
