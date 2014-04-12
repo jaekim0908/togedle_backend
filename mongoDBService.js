@@ -1,4 +1,4 @@
-var MongoClient = require('mongodb').MongoClient;
+var mongodb = require('mongodb');
 var mongojs = require('mongojs');
 var db = require("mongojs").connect("mongodb://localhost:27017/togedle", ["projects"]);
 var Promise = require("bluebird");
@@ -23,6 +23,19 @@ exports.findConfigurationByUser = function(username){
 exports.getProjects = function(){
     return new Promise(function(resolve, reject) {
         db.projects.find({}, function(err, result){
+            if(err || !result) {
+                console.log("error finding projects");
+                reject(err);
+            } else {
+                resolve(result);
+            }
+        });
+    });
+}
+
+exports.getProject = function(id){
+    return new Promise(function(resolve, reject) {
+        db.projects.findOne({_id : new mongodb.ObjectID(id)}, function(err, result){
             if(err || !result) {
                 console.log("error finding projects");
                 reject(err);

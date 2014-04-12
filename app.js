@@ -39,32 +39,6 @@ app.get('/', function(req, res) {
     res.render('index.html');
 });
 
-app.get('/getAccountInfo/:username', function(req, res) {
-    console.log("request in for username : " + req.param('username'));
-    var username = req.params.username;
-    var configuration;
-    mongoDBService.findConfigurationByUser(username)
-    .then(function(conf) {
-        var promises = [];
-        configuration = conf;
-        promises.push(s3Service.getFilenamesFromS3(conf.primary.name));
-        promises.push(bsService.getFilenamesFromBlob(conf.secondary.name));
-        return Promise.all(promises);
-    })
-    .then(function(files){
-        configuration.primary.files = files[0];
-        configuration.secondary.files = files[1];
-        
-        res.writeHead(200, { 'Content-Type': 'application/json' });
-        res.end(JSON.stringify({"configuration" : configuration}));
-    })
-    .catch(function(error){
-        res.writeHead(400, { 'Content-Type': 'application/json' });
-        res.end(JSON.stringify({"error" : error}));
-    });
-});
-
-
 app.get('/projects', function(req, res) {
     mongoDBService.getProjects()
     .then(function(projects) {
@@ -77,13 +51,39 @@ app.get('/project/:id', function(req, res) {
     
 });
 
-app.get('/crop', function(req, res) {
-    var tileWidth = 150;
-    var tileHeight = 100;
-    bsService.get("togedle", "disneyland.jpg", "/tmp/output.jpg")
+app.get('/list/:prefix', function(req, res) {
+    bsService.list("togedle", {"prefix": req.params.prefix})
+    .then(function(files) {
+        console.log(files.length);
+        res.writeHead(200, { 'Content-Type': 'application/json' });
+        res.end(JSON.stringify({"files" : files}));
+    })
+});
+
+app.get('/delete', function(req, res) {
+    bsService.list("togedle", {"prefix": "disney0"})
+    .then(function(images) {
+        return bsService.deleteBlobMulti("togedle", images, 5);
+    })
+    .then(function() {
+        res.writeHead(200, { 'Content-Type': 'application/json' });
+        res.end(JSON.stringify({"status" : "success"}));
+    });
+});
+
+app.get('/crop/:id', function(req, res) {
+    var id = req.params.id;
+    var project;
+    console.log("splitting for project " + id);
+    mongoDBService.getProject(id)
+    .then(function(proj) {
+        console.log(proj);
+        project = proj;
+        return bsService.get("togedle", project.original, "/tmp/" + project.original);
+    })
     .then(function(image) {
         return new Promise(function(resolve, reject) {
-            gm(image).command('convert').in("-crop", tileWidth + "x" + tileHeight).in('+adjoin').in(image).write('outputs/disney%04d.jpg', function(err){
+            gm(image).command('convert').in("-crop", project.tileWidth + "x" + project.tileHeight).in('+adjoin').in(image).write("outputs/" + project.name + "%04d.jpg", function(err){
                 if (err) {
                     reject(err);
                 }
@@ -92,8 +92,9 @@ app.get('/crop', function(req, res) {
         });
     })
     .then(function(folder){
+        console.log("split success");
         // upload to azure
-        bsService.putFolder("togedle", folder)
+        bsService.putFolder("togedle", folder, 3, {"blockIdPrefix" : "tile"})
         .then(function(result){
             res.writeHead(200, { 'Content-Type': 'application/json' });
             res.end(JSON.stringify({"done" : "done"}));

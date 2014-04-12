@@ -4,42 +4,42 @@ var fs = require("fs");
 var util = require("./util");
 var blobService = azure.createBlobService();
 
-exports.put = function(container, filename, fileLocation) {
+exports.put = function(container, filename, fileLocation, options, retry) {
     // fileLocation is the folder
     var fileLocation = (fileLocation == null) ? "" : fileLocation;
     return new Promise(function(resolve, reject) {
         blobService.createBlockBlobFromFile(
                 container,
-                filename,
+                "tile/" + filename,
                 fileLocation + filename,
+                options,
                 function(error, blobResult, response){
                     if(!error){
                         console.log("- stored " + filename);
                         resolve(filename);
                     } else {
-                        // TODO : Do not stop everything because we failed to copy one file.
-                        console.log("error");
-                        reject(error);
+                        console.log("error " + error);
+                        // dangerous!! possible infinite loop
+                        retry(filename);
+                        resolve(error);
                     }
                 });
     });
     
 }
 
-exports.putFolder = function(container, folderLocation) {
+exports.putFolder = function(container, folderLocation, maxThreads, options) {
     var promises = [];
-    var maximumThread = 5;
     var files = fs.readdirSync(folderLocation);
-    for (var i = 0; i < maximumThread; i++){
+    for (var i = 0; i < maxThreads; i++){
         promises.push(util.promiseWhile(
                 //termination condition
                 function() { return files.length <= 0;},
                 //run this until
-                function() { return exports.put(container, files.pop(), folderLocation)}
+                function() { return exports.put(container, files.pop(), folderLocation, options, function(file) { files.push(file); })}
         ));
     }
     return Promise.all(promises);
-    
 }
 
 
@@ -63,17 +63,39 @@ exports.get = function(container, filename, output) {
     
 }
 
-
-//Get filenames from blob storage
-exports.getFilenamesFromBlob = function(containerName){
+exports.deleteBlob = function(container, filename) {
     return new Promise(function(resolve, reject){
-        blobService.listBlobs(containerName, function(error, blobs){
+        blobService.deleteBlob(container, filename, function(error, result){
             if(!error){
-                var fileList = {};
-                for(var i in blobs){
-                    fileList[blobs[i].name] = blobs[i];
-                }
-                resolve(fileList);
+                console.log(filename + " deleted");
+                resolve(result);
+            } else {
+                reject(error);
+            }
+        });
+    });
+}
+
+exports.deleteBlobMulti = function(container, blobs, maximumThread) {
+    var promises = [];
+    for (var i = 0; i < maximumThread; i++){
+        promises.push(util.promiseWhile(
+                //termination condition
+                function() { return blobs.length <= 0;},
+                //run this until
+                function() { return exports.deleteBlob(container, blobs.pop().name); }
+        ));
+    }
+    return Promise.all(promises);
+}
+
+
+
+exports.list = function(container, options){
+    return new Promise(function(resolve, reject){
+        blobService.listBlobs(container, options, function(error, result){
+            if(!error){
+                resolve(result);
             } else {
                 reject(error);
             }
