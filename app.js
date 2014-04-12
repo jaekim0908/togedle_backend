@@ -64,24 +64,17 @@ app.get('/getAccountInfo/:username', function(req, res) {
     });
 });
 
-app.get('/getBucketPolicy/:bucketName', function(req, res) {
-    console.log("request in for bucket : " + req.param('bucketName'));
-    var bucket = req.params.bucketName;
-    s3Service.getBucketPolicy(bucket)
-    .then(function(policy){
-        res.writeHead(200, { 'Content-Type': 'application/json' });
-        res.end(JSON.stringify({"policy" : policy}));
+
+app.get('/projects', function(req, res) {
+    mongoDBService.getProjects()
+    .then(function(projects) {
+       res.writeHead(200, { 'Content-Type': 'application/json' });
+       res.end(JSON.stringify(projects));
     });
 });
 
-app.get('/getContainerACL/:containerName', function(req, res) {
-    console.log("request in for container : " + req.param('containerName'));
-    var containerName = req.params.containerName;
-    bsService.getContainerACL(containerName)
-    .then(function(acl){
-        res.writeHead(200, { 'Content-Type': 'application/json' });
-        res.end(JSON.stringify({"acl" : acl}));
-    });
+app.get('/project/:id', function(req, res) {
+    
 });
 
 app.get('/crop', function(req, res) {

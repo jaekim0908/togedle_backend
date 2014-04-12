@@ -1,11 +1,12 @@
 var MongoClient = require('mongodb').MongoClient;
 var mongojs = require('mongojs');
-var db = require("mongojs").connect("mongodb://localhost:27017/talkingBin", ["bins", "configurations"]);
+var db = require("mongojs").connect("mongodb://localhost:27017/togedle", ["projects"]);
 var Promise = require("bluebird");
 var ObjectId = require('mongodb').ObjectID;
 
 //db.configurations.insert({"username" : "gombbin", "primary" : {"serviceProvider" : "aws", "name" : "talkingbinsample", "multiplier" : 0}, "secondary" : {"serviceProvider" : "azure", "name" : "talkingbinsample", "multiplier" : 0}});
-
+//db.projects.insert({"name" : "disney", "width" : 11, "height" : 24, "done" : [], "inProgress" : []});
+/*
 exports.findConfigurationByUser = function(username){
     return new Promise(function(resolve, reject) {
         db.configurations.findOne({"username" : username}, function(err, configuration){
@@ -17,6 +18,18 @@ exports.findConfigurationByUser = function(username){
             }
         });
     });
-}
+}*/
 
+exports.getProjects = function(){
+    return new Promise(function(resolve, reject) {
+        db.projects.find({}, function(err, result){
+            if(err || !result) {
+                console.log("error finding projects");
+                reject(err);
+            } else {
+                resolve(result);
+            }
+        });
+    });
+}
 
