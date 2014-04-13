@@ -42,13 +42,36 @@ app.get('/', function(req, res) {
 app.get('/projects', function(req, res) {
     mongoDBService.getProjects()
     .then(function(projects) {
+       res.setHeader("Access-Control-Allow-Origin", "http://localhost:8888");        
        res.writeHead(200, { 'Content-Type': 'application/json' });
        res.end(JSON.stringify(projects));
     });
 });
 
 app.get('/project/:id', function(req, res) {
-    
+    mongoDBService.getProject(req.params.id)
+    .then(function(project) {
+       res.setHeader("Access-Control-Allow-Origin", "http://localhost:8888");        
+       res.writeHead(200, { 'Content-Type': 'application/json' });
+       res.end(JSON.stringify(project));
+    });
+});
+
+app.get('/randomTile/:id', function(req, res) {
+    var tileNum;
+    mongoDBService.getTileNumber(req.params.id)
+    .then(function(tile) {
+        tileNum = tile.pop();
+        return mongoDBService.update(req.params.id, {"tiles" : tile});
+    })
+    .then(function() {
+        return mongoDBService.getPushTileNumber(req.params.id, tileNum);
+    })
+    .then(function() {
+       res.setHeader("Access-Control-Allow-Origin", "http://localhost:8888");        
+       res.writeHead(200, { 'Content-Type': 'application/json' });
+       res.end(JSON.stringify({"tile" : tileNum}));
+    });
 });
 
 app.get('/list/:prefix', function(req, res) {
