@@ -10,7 +10,7 @@ for (var i = 0; i < 264; i++){
     
     numbers.push(i);
 }
-db.projects.update({_id: new mongodb.ObjectID("53491643622c6abd56cc6068")}, {$set: {"tiles" : numbers, "done" : [ ], "height" : 24, "inProgress" : [ ], "name" : "disney", "original" : "disneyland.jpg", "originalUrl" : "http://portalvhds3p9kt60f97ngh.blob.core.windows.net/togedle/disneyland.jpg", "tileHeight" : 100, "tileWidth" : 150}});
+db.projects.update({_id: new mongodb.ObjectID("53491643622c6abd56cc6068")}, {$set: {"tiles" : numbers, "imagePrefix" : "disney", "done" : [ ], "width" : 11, "height" : 24, "inProgress" : [ ], "name" : "disney", "original" : "disneyland.jpg", "originalUrl" : "http://portalvhds3p9kt60f97ngh.blob.core.windows.net/togedle/disneyland.jpg", "tileHeight" : 100, "tileWidth" : 150}});
 
 //db.projects.insert({"name" : "disney", "width" : 11, "height" : 24, "done" : [], "inProgress" : []});
 /*
